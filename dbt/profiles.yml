@@ -1,0 +1,10 @@
+nem_grid_pulse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/warehouse/nem.duckdb') }}"
+      schema: main
+      threads: 4
+      extensions:
+        - parquet

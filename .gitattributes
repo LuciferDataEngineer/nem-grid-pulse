@@ -1,0 +1,4 @@
+data/bronze/** linguist-generated
+dashboard/vendor/** linguist-generated
+dashboard/dist/** linguist-generated
+requirements.lock linguist-generated

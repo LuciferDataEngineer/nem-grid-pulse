@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Parquet snapshot landed by the Python ingest. Price files are AEMO's
+      public aggregated price and demand CSVs. Generation files are Open
+      Electricity's public daily energy statistics, fetched with no API key.
+    schema: main
+    loader: read_parquet
+    loaded_at_field: ingested_at
+    freshness:
+      warn_after: {count: 45, period: day}
+      error_after: {count: 120, period: day}
+    tables:
+      - name: price_demand
+        description: Five-minute regional RRP and operational demand. NEM time, interval ending.
+        meta:
+          external_location: "read_parquet('{{ env_var('BRONZE_ROOT') }}/price_demand/**/*.parquet', union_by_name=true)"
+        columns:
+          - name: region
+            description: NEM region identifier.
+            tests: [not_null]
+          - name: settlement_ts
+            description: Interval end in NEM time (AEST, no daylight saving).
+            tests: [not_null]
+          - name: total_demand_mw
+            tests: [not_null]
+          - name: rrp
+            tests: [not_null]
+          - name: ingested_at
+            description: UTC timestamp when this partition was fetched.
+            tests: [not_null]
+      - name: generation_daily
+        description: Daily energy by fuel technology, in gigawatt-hours.
+        meta:
+          external_location: "read_parquet('{{ env_var('BRONZE_ROOT') }}/generation_daily/**/*.parquet', union_by_name=true)"
+        columns:
+          - name: region
+            tests: [not_null]
+          - name: trading_date
+            tests: [not_null]
+          - name: fuel_tech
+            tests: [not_null]
+          - name: ingested_at
+            tests: [not_null]

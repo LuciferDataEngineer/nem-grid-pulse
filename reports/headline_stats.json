@@ -1,0 +1,23 @@
+{
+  "history_vwap": 105.14,
+  "history_share": 0.4189,
+  "latest_price": 58.83,
+  "baseline_price": 73.09,
+  "latest_peak_mw": 27864.0,
+  "latest_negative_hours": 79.2,
+  "latest_negative_share": 0.11,
+  "latest_volatility": 39.85,
+  "latest_renewable_share": 0.4922,
+  "tas_plus_1gw_fraction": 0.6232,
+  "nsw_plus_1gw_fraction": 0.0768,
+  "nem_gap_mw": 8226.6,
+  "nem_peak_mw": 33456.7,
+  "nem_plus_5gw_peak_mw": 38456.7,
+  "nem_new_peaks": 439,
+  "jumpy_month": "Nov 2025",
+  "jumpy_stddev": 245.87,
+  "neg_peak_month": "Nov 2025",
+  "neg_peak_share": 0.2569,
+  "sa_negative_hours": 216.9,
+  "sa_negative_share": 0.3013
+}

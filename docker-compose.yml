@@ -1,0 +1,11 @@
+services:
+  lakehouse:
+    build: .
+    image: nem-grid-pulse:local
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./dashboard/dist:/app/dashboard/dist
+      - ./reports:/app/reports
+      - ./INSIGHTS.md:/app/INSIGHTS.md
+    command: ["make", "transform"]

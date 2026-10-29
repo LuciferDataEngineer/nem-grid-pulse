@@ -1,0 +1,186 @@
+version: 2
+
+models:
+  - name: dim_region
+    description: NEM regions plus an all-market rollup. Colours are the dashboard palette.
+    columns:
+      - name: region_id
+        tests: [not_null, unique]
+      - name: region_name
+        tests: [not_null]
+      - name: region_type
+        tests:
+          - not_null
+          - accepted_values: {values: ["region", "market"]}
+      - name: colour_hex
+        tests: [not_null]
+
+  - name: dim_date
+    description: Calendar spine covering every trading date present in the half-hour fact.
+    columns:
+      - name: date_day
+        tests: [not_null, unique]
+      - name: season_name
+        tests:
+          - not_null
+          - accepted_values: {values: ["summer", "autumn", "winter", "spring"]}
+
+  - name: dim_time_of_day
+    description: Clock hours 0-23 in NEM time, with the evening peak and midday solar window flagged.
+    columns:
+      - name: hour_of_day
+        tests:
+          - not_null
+          - unique
+          - column_between: {min_value: 0, max_value: 23}
+      - name: daypart
+        tests:
+          - accepted_values: {values: ["evening_peak", "midday", "overnight", "shoulder"]}
+
+  - name: fct_price_demand_30min
+    description: >
+      Complete half-hour price and operational demand. RRP is both the time-weighted
+      mean of the six 5-minute prices and the demand-weighted mean. Incremental on
+      the half-hour end, with a two-day overlap.
+    columns:
+      - name: price_interval_key
+        tests: [not_null, unique]
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: settlement_ts
+        tests: [not_null]
+      - name: trading_date
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_date'), field: date_day}
+      - name: hour_of_day
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_time_of_day'), field: hour_of_day}
+      - name: demand_mw
+        tests:
+          - not_null
+          - column_between: {min_value: -2000, max_value: 30000}
+      - name: rrp_time_weighted
+        tests:
+          - not_null
+          - column_between: {min_value: -1000, max_value: 30000}
+      - name: interval_count
+        tests:
+          - not_null
+          - accepted_values: {values: [6]}
+
+  - name: mart_daily_region_summary
+    description: >
+      One row per region (and NEM) per trading day. Renewable share is local
+      generation, not the electrons consumed: imports are excluded. Residual
+      energy subtracts grid-scale wind and utility solar from operational demand
+      and does not subtract rooftop PV a second time. Published fuel series can
+      print a few hundredths of a GWh below zero; those values stay on the fuel
+      columns and are floored at zero only inside the renewable-share ratio.
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: trading_date
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_date'), field: date_day}
+      - name: demand_mwh
+        tests: [not_null]
+      - name: rrp_time_weighted
+        tests: [not_null]
+
+  - name: mart_hourly_profile
+    description: Average price and demand by hour of day, for all history, seasons, and the last 12 complete months.
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: profile_slice
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["all_history", "summer", "winter", "last_12_complete_months"]
+      - name: hour_of_day
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_time_of_day'), field: hour_of_day}
+      - name: avg_demand_mw
+        tests: [not_null]
+      - name: avg_rrp
+        tests: [not_null]
+
+  - name: mart_negative_price_events
+    description: Monthly hours when the 5-minute regional (or NEM demand-weighted) spot price was below zero.
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: month_start
+        tests: [not_null]
+      - name: negative_hours
+        tests:
+          - not_null
+          - column_between: {min_value: 0, max_value: 800}
+      - name: negative_interval_share
+        tests:
+          - not_null
+          - column_between: {min_value: 0, max_value: 1}
+      - name: is_complete_month
+        tests: [not_null]
+
+  - name: mart_price_volatility
+    description: Monthly dispersion of 5-minute RRP. The headline measure is the sample standard deviation.
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: month_start
+        tests: [not_null]
+      - name: rrp_stddev
+        tests: [not_null]
+      - name: rrp_vw_avg
+        tests: [not_null]
+      - name: is_complete_month
+        tests: [not_null]
+
+  - name: mart_datacentre_load_scenarios
+    description: >
+      Illustrative flat data-centre load added to historical operational demand.
+      scenario_mw is the addition inside each region. The NEM rows apply that
+      same addition in all five regions at once. is_forecast is always false.
+      This is not a price forecast and not a unit-commitment model.
+    columns:
+      - name: scenario_key
+        tests: [not_null, unique]
+      - name: grain
+        tests:
+          - not_null
+          - accepted_values: {values: ["window_summary", "monthly", "hourly"]}
+      - name: region_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_region'), field: region_id}
+      - name: scenario_mw
+        tests:
+          - not_null
+          - accepted_values: {values: [0, 500, 1000, 2000]}
+      - name: added_mw_on_series
+        tests: [not_null]
+      - name: peak_operational_demand_mw
+        tests: [not_null]
+      - name: model_id
+        tests:
+          - not_null
+          - accepted_values: {values: ["illustrative_flat_load_v1"]}
+      - name: is_forecast
+        tests: [not_null]
+      - name: model_note
+        tests: [not_null]
