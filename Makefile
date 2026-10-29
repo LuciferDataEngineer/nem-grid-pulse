@@ -22,6 +22,7 @@ validate:
 	python -m nem_grid_pulse validate
 
 transform: validate
+	mkdir -p $(ROOT)/data/warehouse
 	dbt build --project-dir dbt --profiles-dir dbt
 
 test:
