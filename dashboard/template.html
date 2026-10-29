@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEM Grid Pulse</title>
+  <style>
+    :root {
+      --navy: #0a2540;
+      --ink: #142033;
+      --muted: #52627a;
+      --line: #e2e8f0;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --gold: #e0b15a;
+      --green: #067647;
+      --green-bg: #e7f6ee;
+      --amber: #b54708;
+      --amber-bg: #fff4e5;
+      --red: #b42318;
+      --red-bg: #fdecec;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "Liberation Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    h1, h2, h3 { font-family: Georgia, "Liberation Serif", serif; font-weight: 600; letter-spacing: -0.02em; }
+    header {
+      background: var(--navy);
+      color: #f7f4ee;
+      border-bottom: 4px solid var(--gold);
+    }
+    .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    header .wrap { padding: 28px 0 26px; }
+    .eyebrow { margin: 0 0 8px; letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.75rem; color: var(--gold); }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.1rem); }
+    .lede { max-width: 68ch; margin: 10px 0 0; color: #d5deea; font-size: 1.05rem; }
+    .asof { margin: 12px 0 0; color: #b7c3d4; font-size: 0.92rem; }
+    main { padding: 22px 0 48px; }
+    .banner {
+      background: #fff8eb;
+      border: 1px solid #f0d7a2;
+      color: #5c4210;
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px 12px;
+      box-shadow: 0 8px 24px rgba(10, 37, 64, 0.05);
+      border-top: 4px solid var(--muted);
+    }
+    .kpi-green { border-top-color: var(--green); }
+    .kpi-amber { border-top-color: var(--amber); }
+    .kpi-red { border-top-color: var(--red); }
+    .kpi .label { margin: 0; color: var(--muted); font-size: 0.82rem; }
+    .kpi .value { margin: 6px 0 0; font-size: 1.7rem; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+    .kpi .unit { margin: 0; color: var(--muted); font-size: 0.82rem; min-height: 1.2em; }
+    .trend { margin: 8px 0 0; font-weight: 650; font-size: 0.92rem; }
+    .tone-good { color: var(--green); }
+    .tone-bad { color: var(--red); }
+    .tone-neutral { color: var(--muted); }
+    .gap, .period { margin: 2px 0 0; color: var(--muted); font-size: 0.82rem; }
+    .pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pill-green { background: var(--green-bg); color: var(--green); }
+    .pill-amber { background: var(--amber-bg); color: var(--amber); }
+    .pill-red { background: var(--red-bg); color: var(--red); }
+    .rules { margin: 10px 2px 0; color: var(--muted); font-size: 0.82rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 16px 8px;
+      margin-top: 16px;
+      box-shadow: 0 8px 24px rgba(10, 37, 64, 0.04);
+    }
+    .card h2 { margin: 0 0 4px; font-size: 1.35rem; }
+    .card .sub { margin: 0 0 8px; color: var(--muted); }
+    .chart { height: 380px; }
+    .chart.short { height: 340px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--navy);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button[aria-pressed="true"] { background: var(--navy); color: white; border-color: var(--navy); }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+    th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 650; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .scroll { overflow-x: auto; }
+    .recs { display: grid; gap: 12px; }
+    .rec { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 4px 0 8px; }
+    .num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--navy); color: var(--gold);
+      display: grid; place-items: center; font-weight: 700;
+    }
+    .rec h3 { margin: 0 0 4px; font-size: 1.12rem; }
+    .rec p { margin: 0; }
+    footer { background: var(--navy); color: #d5deea; padding: 28px 0 36px; }
+    footer a { color: var(--gold); }
+    footer h2 { color: white; margin-top: 0; }
+    footer li { margin: 6px 0; }
+    @media (max-width: 900px) {
+      .kpis, .grid-2 { grid-template-columns: 1fr; }
+      .chart, .chart.short { height: 320px; }
+    }
+    @media (max-width: 640px) {
+      .wrap { width: min(1180px, calc(100% - 20px)); }
+      header .wrap { padding: 20px 0 18px; }
+      .kpi .value { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <p class="eyebrow">National Electricity Market · Australia</p>
+      <h1>NEM Grid Pulse</h1>
+      <p class="lede">How regional prices, demand and renewable supply are moving, and what a flat data-centre load would do to peak stress.</p>
+      <p class="asof" id="asof"></p>
+    </div>
+  </header>
+  <main>
+    <div class="wrap">
+      <p class="banner" id="banner"></p>
+      <section class="kpis" id="kpis" aria-label="Headline indicators"></section>
+      <p class="rules">Status compares the latest complete month with the prior twelve complete months. Price, peak and volatility: amber above 10% (peak 5%) and red above 30% (peak 15%). Negative-price hours: amber from 2% of intervals, red from 8%. Renewable share: green at 45% or more, amber from 30%. A flat +1 GW is amber at 25% of a region's own peak and red at 50%.</p>
+
+      <section class="card">
+        <h2>Monthly price</h2>
+        <p class="sub">Volume-weighted regional spot price. NEM is demand-weighted across the five regions. A starred month is still incomplete.</p>
+        <div id="price-chart" class="chart"></div>
+      </section>
+
+      <section class="card">
+        <h2>Hour of day</h2>
+        <p class="sub">The duck curve in NEM time, which does not follow daylight saving. Demand is operational demand, already net of rooftop solar.</p>
+        <div class="toolbar" id="slice-buttons"></div>
+        <div class="grid-2">
+          <div>
+            <h3>Demand</h3>
+            <div id="demand-chart" class="chart short"></div>
+          </div>
+          <div>
+            <h3>Price</h3>
+            <div id="price-hour-chart" class="chart short"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <section class="card">
+          <h2>Negative-price hours</h2>
+          <p class="sub">Hours when the 5-minute spot price was below zero. The NEM line uses the demand-weighted price.</p>
+          <div id="negative-chart" class="chart short"></div>
+        </section>
+        <section class="card">
+          <h2>Volatility</h2>
+          <p class="sub">Sample standard deviation of the 5-minute regional reference price, in AUD per MWh.</p>
+          <div id="vol-chart" class="chart short"></div>
+        </section>
+      </section>
+
+      <section class="card">
+        <h2>Renewable share</h2>
+        <p class="sub">Wind, solar, hydro and bioenergy divided by local generation. Imports are excluded, so this is not the share of electrons consumed. Rooftop solar is in the numerator and is not subtracted from operational demand again.</p>
+        <div id="renewable-chart" class="chart"></div>
+      </section>
+
+      <section class="card">
+        <h2>Flat data-centre load</h2>
+        <p class="sub" id="scenario-sub"></p>
+        <div id="peak-chart" class="chart"></div>
+        <div id="uplift-chart" class="chart"></div>
+        <div class="scroll">
+          <table id="scenario-table"></table>
+        </div>
+        <h3>Average day, with the load left on</h3>
+        <div class="toolbar" id="region-buttons"></div>
+        <div id="shape-chart" class="chart"></div>
+      </section>
+
+      <section class="card">
+        <h2>So what</h2>
+        <div class="recs" id="recs"></div>
+      </section>
+    </div>
+  </main>
+  <footer>
+    <div class="wrap">
+      <h2>Sources</h2>
+      <ul id="sources"></ul>
+      <p>Code in this project is MIT. The cached market data remains subject to the publishers' terms. Scenarios are illustrative and are not a forecast.</p>
+    </div>
+  </footer>
+  <script>
+/*__ECHARTS__*/
+  </script>
+  <script>
+const DATA = __DATA_JSON__;
+const ORDER = DATA.regions.map((region) => region.id);
+const COLOUR = Object.fromEntries(DATA.regions.map((region) => [region.id, region.colour]));
+const NAME = Object.fromEntries(DATA.regions.map((region) => [region.id, region.name]));
+const SHORT = { NSW1: "NSW", QLD1: "QLD", VIC1: "VIC", SA1: "SA", TAS1: "TAS", NEM: "NEM" };
+const STATE = { slice: "last_12_complete_months", region: "NSW1" };
+const charts = [];
+
+document.getElementById("asof").textContent =
+  "Data through " + DATA.as_of_label + " · " + DATA.window_label;
+document.getElementById("banner").textContent = DATA.banner;
+
+function axisStyle() {
+  return { color: "#52627a", fontFamily: "Liberation Sans, Segoe UI, Helvetica, Arial, sans-serif" };
+}
+
+function baseOption(labels, yName, formatter) {
+  return {
+    color: ORDER.map((id) => COLOUR[id]),
+    textStyle: axisStyle(),
+    tooltip: { trigger: "axis" },
+    legend: { type: "plain", bottom: 0, textStyle: { color: "#142033" } },
+    grid: { left: 72, right: 16, top: 28, bottom: 64 },
+    xAxis: { type: "category", data: labels, axisLabel: { color: "#52627a", hideOverlap: true } },
+    yAxis: {
+      type: "value",
+      name: yName,
+      nameTextStyle: { color: "#52627a" },
+      axisLabel: { color: "#52627a", formatter: formatter || null },
+      splitLine: { lineStyle: { color: "#e6edf5" } }
+    }
+  };
+}
+
+function monthAxis(rows) {
+  const labels = [];
+  const keys = [];
+  rows.forEach((row) => {
+    if (!keys.includes(row.month)) {
+      keys.push(row.month);
+      const mark = row.is_complete_month === false ? "*" : "";
+      labels.push(row.month_label + mark);
+    }
+  });
+  return { keys, labels };
+}
+
+function seriesByRegion(rows, keys, valueOf) {
+  return ORDER.map((id) => ({
+    name: SHORT[id],
+    type: "line",
+    showSymbol: false,
+    lineStyle: { width: id === "NEM" ? 3 : 1.8 },
+    data: keys.map((key) => {
+      const hit = rows.find((row) => row.region_id === id && row.month === key);
+      return hit ? valueOf(hit) : null;
+    })
+  }));
+}
+
+function mount(id, option) {
+  const chart = echarts.init(document.getElementById(id));
+  chart.setOption(option);
+  charts.push(chart);
+  return chart;
+}
+
+function renderKpis() {
+  const root = document.getElementById("kpis");
+  root.innerHTML = DATA.kpis.map((card) => {
+    const arrow = card.direction === "up" ? "▲" : card.direction === "down" ? "▼" : "•";
+    return `<article class="kpi kpi-${card.status}">
+      <p class="label">${card.label}</p>
+      <p class="value">${card.value}</p>
+      <p class="unit">${card.unit}</p>
+      <p class="trend tone-${card.tone}">${arrow} ${card.trend}</p>
+      <p class="gap">${card.gap}</p>
+      <span class="pill pill-${card.status}">${card.status_label}</span>
+      <p class="period">${card.period}</p>
+    </article>`;
+  }).join("");
+}
+
+function drawMonthly() {
+  const price = monthAxis(DATA.monthly_price);
+  const priceOption = baseOption(price.labels, "AUD/MWh", (value) => "$" + value);
+  priceOption.series = seriesByRegion(DATA.monthly_price, price.keys, (row) => row.rrp_vw_avg);
+  mount("price-chart", priceOption);
+
+  const negative = monthAxis(DATA.monthly_negative);
+  const negativeOption = baseOption(negative.labels, "Hours");
+  negativeOption.series = seriesByRegion(DATA.monthly_negative, negative.keys, (row) => row.negative_hours);
+  mount("negative-chart", negativeOption);
+
+  const vol = monthAxis(DATA.monthly_price);
+  const volOption = baseOption(vol.labels, "AUD/MWh", (value) => "$" + value);
+  volOption.series = seriesByRegion(DATA.monthly_price, vol.keys, (row) => row.rrp_stddev);
+  mount("vol-chart", volOption);
+
+  const renewable = monthAxis(DATA.monthly_renewable);
+  const renewableOption = baseOption(renewable.labels, "Share", (value) => value + "%");
+  renewableOption.yAxis.max = 100;
+  renewableOption.series = seriesByRegion(DATA.monthly_renewable, renewable.keys, (row) =>
+    row.renewable_share == null ? null : Math.round(row.renewable_share * 1000) / 10
+  );
+  mount("renewable-chart", renewableOption);
+}
+
+function hourlyRows() {
+  return DATA.hourly.filter((row) => row.profile_slice === STATE.slice);
+}
+
+function drawHourly() {
+  const rows = hourlyRows();
+  const hours = [...new Set(rows.map((row) => row.hour_of_day))].sort((a, b) => a - b);
+  const labels = hours.map((hour) => String(hour).padStart(2, "0"));
+  function lines(valueOf) {
+    return ORDER.map((id) => ({
+      name: SHORT[id],
+      type: "line",
+      showSymbol: false,
+      smooth: 0.15,
+      lineStyle: { width: id === "NEM" ? 3 : 1.8 },
+      data: hours.map((hour) => {
+        const hit = rows.find((row) => row.region_id === id && row.hour_of_day === hour);
+        return hit ? valueOf(hit) : null;
+      })
+    }));
+  }
+  const demand = baseOption(labels, "MW");
+  demand.series = lines((row) => row.avg_demand_mw);
+  const price = baseOption(labels, "AUD/MWh", (value) => "$" + value);
+  price.series = lines((row) => row.avg_rrp);
+  charts.forEach((chart) => {
+    const dom = chart.getDom();
+    if (dom.id === "demand-chart" || dom.id === "price-hour-chart") chart.dispose();
+  });
+  for (let index = charts.length - 1; index >= 0; index -= 1) {
+    if (charts[index].isDisposed()) charts.splice(index, 1);
+  }
+  mount("demand-chart", demand);
+  mount("price-hour-chart", price);
+}
+
+function scenarioValue(region, mw, key) {
+  const hit = DATA.scenarios.find((row) => row.region_id === region && row.scenario_mw === mw);
+  return hit ? hit[key] : null;
+}
+
+function drawScenarios() {
+  const regions = ORDER.filter((id) => id !== "NEM");
+  const names = regions.map((id) => SHORT[id]);
+  const loads = [0, 500, 1000, 2000];
+  const labels = { 0: "History", 500: "+500 MW", 1000: "+1 GW", 2000: "+2 GW" };
+  const peak = baseOption(names, "MW");
+  peak.color = ["#94a3b8", "#0f766e", "#2563eb", "#b42318"];
+  peak.series = loads.map((mw) => ({
+    name: labels[mw],
+    type: "bar",
+    data: regions.map((id) => scenarioValue(id, mw, "peak_operational_demand_mw"))
+  }));
+  mount("peak-chart", peak);
+
+  const upliftRegions = ORDER;
+  const uplift = baseOption(upliftRegions.map((id) => SHORT[id]), "Percent of peak", (value) => value + "%");
+  uplift.color = ["#0f766e", "#2563eb", "#b42318"];
+  uplift.series = [500, 1000, 2000].map((mw) => ({
+    name: labels[mw],
+    type: "bar",
+    data: upliftRegions.map((id) => {
+      const value = scenarioValue(id, mw, "uplift_pct_of_baseline_peak");
+      return value == null ? null : Math.round(value * 1000) / 10;
+    })
+  }));
+  mount("uplift-chart", uplift);
+
+  const header = `<tr><th>Region</th><th>Peak</th><th>+500 MW</th><th>+1 GW</th><th>+2 GW</th><th>+1 GW vs peak</th><th>New peaks at +1 GW</th></tr>`;
+  const body = ORDER.map((id) => `<tr>
+    <td>${NAME[id]}</td>
+    <td>${Math.round(scenarioValue(id, 0, "baseline_peak_operational_demand_mw")).toLocaleString("en-AU")}</td>
+    <td>${Math.round(scenarioValue(id, 500, "peak_operational_demand_mw")).toLocaleString("en-AU")}</td>
+    <td>${Math.round(scenarioValue(id, 1000, "peak_operational_demand_mw")).toLocaleString("en-AU")}</td>
+    <td>${Math.round(scenarioValue(id, 2000, "peak_operational_demand_mw")).toLocaleString("en-AU")}</td>
+    <td>${(scenarioValue(id, 1000, "uplift_pct_of_baseline_peak") * 100).toFixed(1)}%</td>
+    <td>${Math.round(scenarioValue(id, 1000, "intervals_above_historical_peak")).toLocaleString("en-AU")}</td>
+  </tr>`).join("");
+  document.getElementById("scenario-table").innerHTML = header + body;
+  const nem = DATA.scenarios.find((row) => row.region_id === "NEM" && row.scenario_mw === 1000);
+  document.getElementById("scenario-sub").textContent =
+    "Last 12 complete months. Bars are the highest half-hour of operational demand if the same flat load is added in that region. " +
+    "The NEM case adds the load in all five regions at once, lifting the peak from " +
+    Math.round(scenarioValue("NEM", 0, "baseline_peak_operational_demand_mw")).toLocaleString("en-AU") +
+    " MW to " + Math.round(nem.peak_operational_demand_mw).toLocaleString("en-AU") +
+    " MW. The evening-minus-midday gap does not change. Illustrative only.";
+}
+
+function drawShape() {
+  const rows = DATA.scenario_hourly.filter((row) => row.region_id === STATE.region);
+  const hours = [...new Set(rows.map((row) => row.hour_of_day))].sort((a, b) => a - b);
+  const loads = [0, 500, 1000, 2000];
+  const labels = { 0: "History", 500: "+500 MW", 1000: "+1 GW", 2000: "+2 GW" };
+  const option = baseOption(hours.map((hour) => String(hour).padStart(2, "0")), "MW");
+  option.color = ["#94a3b8", "#0f766e", "#2563eb", "#b42318"];
+  option.series = loads.map((mw) => ({
+    name: labels[mw],
+    type: "line",
+    showSymbol: false,
+    data: hours.map((hour) => {
+      const hit = rows.find((row) => row.scenario_mw === mw && row.hour_of_day === hour);
+      return hit ? hit.avg_demand_mw : null;
+    })
+  }));
+  const existing = charts.find((chart) => chart.getDom().id === "shape-chart");
+  if (existing) {
+    existing.dispose();
+    charts.splice(charts.indexOf(existing), 1);
+  }
+  mount("shape-chart", option);
+}
+
+function renderButtons(rootId, items, current, onPick) {
+  const root = document.getElementById(rootId);
+  root.innerHTML = items.map((item) =>
+    `<button type="button" data-value="${item.value}" aria-pressed="${item.value === current}">${item.label}</button>`
+  ).join("");
+  root.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => onPick(button.dataset.value));
+  });
+}
+
+function bindSlice() {
+  renderButtons("slice-buttons", [
+    { value: "last_12_complete_months", label: "Last 12 months" },
+    { value: "all_history", label: "All history" },
+    { value: "summer", label: "Summer" },
+    { value: "winter", label: "Winter" }
+  ], STATE.slice, (value) => {
+    STATE.slice = value;
+    bindSlice();
+    drawHourly();
+  });
+}
+
+function bindRegion() {
+  renderButtons(
+    "region-buttons",
+    DATA.regions.map((region) => ({ value: region.id, label: region.name })),
+    STATE.region,
+    (value) => {
+      STATE.region = value;
+      bindRegion();
+      drawShape();
+    }
+  );
+}
+
+function renderRecs() {
+  document.getElementById("recs").innerHTML = DATA.recommendations.map((item, index) =>
+    `<article class="rec"><div class="num">${index + 1}</div><div><h3>${item.title}</h3><p>${item.body}</p></div></article>`
+  ).join("");
+}
+
+function renderSources() {
+  document.getElementById("sources").innerHTML = DATA.sources.map((source) =>
+    `<li><a href="${source.url}">${source.name}</a>. ${source.note}</li>`
+  ).join("");
+}
+
+renderKpis();
+drawMonthly();
+bindSlice();
+drawHourly();
+drawScenarios();
+bindRegion();
+drawShape();
+renderRecs();
+renderSources();
+window.addEventListener("resize", () => charts.forEach((chart) => chart.resize()));
+  </script>
+</body>
+</html>

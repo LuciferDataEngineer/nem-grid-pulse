@@ -1,0 +1,46 @@
+dataset: open_electricity_generation_daily
+version: 1
+description: >
+  Daily energy by fuel technology for one NEM region and calendar year.
+  Values are gigawatt-hours as published. A small negative tolerance covers
+  rounding on curtailment; large negatives fail the contract.
+unique_key: [region, trading_date, fuel_tech]
+min_rows: 100
+max_rows: 20000
+columns:
+  region:
+    type: string
+    required: true
+    nullable: false
+    allowed: [NSW1, QLD1, VIC1, SA1, TAS1]
+  trading_date:
+    type: date
+    required: true
+    nullable: false
+  fuel_tech:
+    type: string
+    required: true
+    nullable: false
+  energy_gwh:
+    type: float
+    required: true
+    nullable: true
+    min: -1
+    max: 500
+  units:
+    type: string
+    required: true
+    nullable: false
+    allowed: [GWh]
+  source_url:
+    type: string
+    required: true
+    nullable: false
+  source_sha256:
+    type: string
+    required: true
+    nullable: false
+  ingested_at:
+    type: timestamp
+    required: true
+    nullable: false

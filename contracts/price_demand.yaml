@@ -1,0 +1,52 @@
+dataset: aemo_price_and_demand
+version: 1
+description: >
+  Canonical bronze schema for one AEMO aggregated price and demand file
+  after parsing. Bounds sit outside the NEM market price floor (-1000 AUD/MWh)
+  and above the administered market price cap so real scarcity prices land,
+  while corrupted values fail the pipeline.
+unique_key: [region, settlement_ts]
+min_rows: 100
+max_rows: 12000
+columns:
+  region:
+    type: string
+    required: true
+    nullable: false
+    allowed: [NSW1, QLD1, VIC1, SA1, TAS1]
+  settlement_ts:
+    type: timestamp
+    required: true
+    nullable: false
+  total_demand_mw:
+    type: float
+    required: true
+    nullable: false
+    # South Australia publishes negative operational demand when rooftop PV
+    # exceeds regional consumption. The floor is wide enough for that and
+    # still rejects corrupted values.
+    min: -2000
+    max: 30000
+  rrp:
+    type: float
+    required: true
+    nullable: false
+    min: -1000
+    max: 30000
+  period_type:
+    type: string
+    required: true
+    nullable: false
+    allowed: [TRADE]
+  source_url:
+    type: string
+    required: true
+    nullable: false
+  source_sha256:
+    type: string
+    required: true
+    nullable: false
+  ingested_at:
+    type: timestamp
+    required: true
+    nullable: false

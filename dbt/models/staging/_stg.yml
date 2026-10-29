@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_aemo_price_demand
+    description: >
+      Typed 5-minute regional price and operational demand. Trading date and
+      hour are in NEM time. The interval ending at 00:00 belongs to the previous day.
+    columns:
+      - name: region_id
+        tests: [not_null, relationships: {to: ref('dim_region'), field: region_id}]
+      - name: settlement_ts
+        tests: [not_null]
+      - name: total_demand_mw
+        tests:
+          - not_null
+          - column_between: {min_value: -2000, max_value: 30000}
+      - name: rrp
+        tests:
+          - not_null
+          - column_between: {min_value: -1000, max_value: 30000}
+      - name: trading_date
+        tests: [not_null]
+      - name: hour_of_day
+        tests:
+          - not_null
+          - column_between: {min_value: 0, max_value: 23}
+          - relationships: {to: ref('dim_time_of_day'), field: hour_of_day}
+  - name: stg_generation_fuel_daily
+    description: Daily fuel energy in GWh, as published by Open Electricity's public static files.
+    columns:
+      - name: region_id
+        tests: [not_null]
+      - name: trading_date
+        tests: [not_null]
+      - name: fuel_tech
+        tests: [not_null]
+      - name: energy_gwh
+        tests:
+          - column_between: {min_value: -1, max_value: 500}

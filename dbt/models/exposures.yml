@@ -1,0 +1,19 @@
+version: 2
+
+exposures:
+  - name: grid_pulse_dashboard
+    type: dashboard
+    maturity: medium
+    url: https://luciferdataengineer.github.io/nem-grid-pulse/
+    description: >
+      Static decision dashboard for NEM prices, the duck curve, negative-price
+      hours, volatility, renewable share, and illustrative data-centre load scenarios.
+    depends_on:
+      - ref('mart_daily_region_summary')
+      - ref('mart_hourly_profile')
+      - ref('mart_negative_price_events')
+      - ref('mart_price_volatility')
+      - ref('mart_datacentre_load_scenarios')
+      - ref('dim_region')
+    owner:
+      name: LuciferDataEngineer
